@@ -19,6 +19,7 @@ package config
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/google/go-github/v74/github"
 	"golang.org/x/mod/semver"
@@ -39,9 +40,16 @@ func supportedKubernetesVersions() (releases []string) {
 	return releases
 }
 
+func GHClient() *github.Client {
+	if os.Getenv("GITHUB_TOKEN") == "" {
+		return github.NewClient(nil)
+	}
+	return github.NewClient(nil).WithAuthToken(os.Getenv("GITHUB_TOKEN"))
+}
+
 // IsInGitHubKubernetesVersions checks whether ver is in the GitHub list of K8s versions
 func IsInGitHubKubernetesVersions(ver string) (bool, error) {
-	ghc := github.NewClient(nil)
+	ghc := GHClient()
 
 	_, resp, err := ghc.Repositories.GetReleaseByTag(context.Background(), "kubernetes", "kubernetes", ver)
 	if err != nil {
